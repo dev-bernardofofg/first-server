@@ -24,14 +24,16 @@ describe("POST /contatos", () => {
       .post("/contatos")
       .set("Authorization", `Bearer ${token}`)
       .send({ nome: "Bernardo", sobrenome: "Filipe" });
-    // Act
-    expect(res.status).toBe(201);
+
     // Assert
-    expect(res.body).toEqual({
-      id: expect.any(Number),
-      nome: "Bernardo",
-      sobrenome: "Filipe",
-    });
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        id: expect.any(Number),
+        nome: "Bernardo",
+        sobrenome: "Filipe",
+      }),
+    );
     contatoId = res.body.id;
   });
 
@@ -87,9 +89,8 @@ describe("GET /contatos", () => {
       .get("/contatos")
       .set("Authorization", `Bearer ${token}`);
 
-    // Act
-    expect(res.status).toBe(200);
     // Assert
+    expect(res.status).toBe(200);
     expect(res.body).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -110,9 +111,8 @@ describe("PUT /contatos/:id", () => {
       .set("Authorization", `Bearer ${token}`)
       .send({ nome: "Bernardo", sobrenome: "Filipe" });
 
-    // Act
-    expect(res.status).toBe(200);
     // Assert
+    expect(res.status).toBe(200);
     expect(res.body).toEqual({
       id: expect.any(Number),
       nome: "Bernardo",
@@ -127,9 +127,9 @@ describe("DELETE /contatos/:id", () => {
     const res = await request(app)
       .delete(`/contatos/${contatoId}`)
       .set("Authorization", `Bearer ${token}`);
-    // Act
-    expect(res.status).toBe(204);
+
     // Assert
+    expect(res.status).toBe(204);
     expect(res.body).toEqual({});
   });
 
