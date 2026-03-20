@@ -132,6 +132,17 @@ describe("DELETE /contatos/:id", () => {
     // Assert
     expect(res.body).toEqual({});
   });
+
+  it("deve retornar erro ao deletar um contato invalido", async () => {
+    // Arrange
+    const res = await request(app)
+      .delete("/contatos/999")
+      .set("Authorization", `Bearer ${token}`);
+    // Act
+    expect(res.status).toBe(404);
+    // Assert
+    expect(res.body).toEqual({ erro: "Não encontrado" });
+  });
 });
 
 describe("GET /contatos/:id", () => {
@@ -147,18 +158,5 @@ describe("GET /contatos/:id", () => {
       nome: expect.any(String),
       sobrenome: expect.any(String),
     });
-  });
-});
-
-describe("DELETE /contatos/:id", () => {
-  it("deve retornar erro ao deletar um contato invalido", async () => {
-    // Arrange
-    const res = await request(app)
-      .delete("/contatos/999")
-      .set("Authorization", `Bearer ${token}`);
-    // Act
-    expect(res.status).toBe(404);
-    // Assert
-    expect(res.body).toEqual({ erro: "Não encontrado" });
   });
 });
