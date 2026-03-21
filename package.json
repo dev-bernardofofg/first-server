@@ -1,9 +1,10 @@
 {
   "name": "first-server",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
-    "start": "node server.js",
+    "start": "tsx server.ts",
+    "build": "tsc",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -20,7 +21,14 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/pg": "^8.20.0",
+    "@types/supertest": "^7.2.0",
     "supertest": "^7.2.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
     "vitest": "^4.1.0"
   }
 }
