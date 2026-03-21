@@ -1,9 +1,9 @@
 {
   "name": "first-server",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "src/app.ts",
   "scripts": {
-    "start": "tsx server.ts",
+    "start": "tsx src/server.ts",
     "build": "tsc",
     "test": "vitest run",
     "test:watch": "vitest"

@@ -1,22 +1,23 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-export interface UsuarioPayload {
+export interface UserPayload {
   id: number;
   email: string;
+  role: string;
 }
 
 declare module "express-serve-static-core" {
   interface Request {
-    usuario?: UsuarioPayload;
+    user?: UserPayload;
   }
 }
 
-function autenticar(req: Request, res: Response, next: NextFunction): void {
+function authenticate(req: Request, res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    res.status(401).json({ erro: "Token não fornecido" });
+    res.status(401).json({ error: "Token not provided" });
     return;
   }
 
@@ -26,12 +27,12 @@ function autenticar(req: Request, res: Response, next: NextFunction): void {
     const payload = jwt.verify(
       token,
       process.env.JWT_SECRET!,
-    ) as UsuarioPayload;
-    req.usuario = payload;
+    ) as UserPayload;
+    req.user = payload;
     next();
   } catch (err) {
-    res.status(401).json({ erro: "Token inválido ou expirado" });
+    res.status(401).json({ error: "Invalid or expired token" });
   }
 }
 
-export default autenticar;
+export default authenticate;
