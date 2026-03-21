@@ -1,22 +1,31 @@
 require("dotenv").config();
-const Database = require("better-sqlite3");
+const { Pool } = require("pg");
 
-const db = new Database(process.env.DB_FILE);
+const db = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl:
+    process.env.NODE_ENV === "production"
+      ? { rejectUnauthorized: false }
+      : false,
+});
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS contatos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nome TEXT NOT NULL,
-    sobrenome TEXT NOT NULL
-  )
+async function initializeDatabase() {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS contatos (
+      id SERIAL PRIMARY KEY,
+      nome TEXT NOT NULL,
+      sobrenome TEXT NOT NULL
+    )
   `);
-
-db.exec(`
+  await db.query(`
     CREATE TABLE IF NOT EXISTS usuarios (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       email TEXT NOT NULL UNIQUE,
       senha TEXT NOT NULL
     )
-    `);
+  `);
+}
+
+initializeDatabase().catch(console.error);
 
 module.exports = db;

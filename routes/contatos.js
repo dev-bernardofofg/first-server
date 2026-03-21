@@ -10,9 +10,9 @@ const contatoSchema = z.object({
     .min(1, "Sobrenome é obrigatório"),
 });
 
-router.get("/", (req, res, next) => {
+router.get("/", async (req, res, next) => {
   try {
-    const contatos = db.prepare("SELECT * FROM contatos").all();
+    const { rows: contatos } = await db.query("SELECT * FROM contatos");
     res.json(contatos);
   } catch (error) {
     next(error);
@@ -20,11 +20,11 @@ router.get("/", (req, res, next) => {
 });
 
 // GET — busca um pelo id
-router.get("/:id", (req, res, next) => {
+router.get("/:id", async (req, res, next) => {
   try {
-    const contato = db
-      .prepare("SELECT * FROM contatos WHERE id = ?")
-      .get(Number(req.params.id));
+    const {
+      rows: [contato],
+    } = await db.query("SELECT * FROM contatos WHERE id = $1", [req.params.id]);
     if (!contato) return res.status(404).json({ erro: "Não encontrado" });
     res.json(contato).status(200);
   } catch (error) {
@@ -33,7 +33,7 @@ router.get("/:id", (req, res, next) => {
 });
 
 // POST — cria novo
-router.post("/", (req, res, next) => {
+router.post("/", async (req, res, next) => {
   try {
     const result = contatoSchema.safeParse(req.body);
 
@@ -45,20 +45,21 @@ router.post("/", (req, res, next) => {
 
     const { nome, sobrenome } = result.data;
 
-    const inserted = db
-      .prepare("INSERT INTO contatos (nome, sobrenome) VALUES (?, ?)")
-      .run(nome, sobrenome);
+    const {
+      rows: [inserted],
+    } = await db.query(
+      "INSERT INTO contatos (nome, sobrenome) VALUES ($1, $2) RETURNING *",
+      [nome, sobrenome],
+    );
 
-    return res
-      .status(201)
-      .json({ id: inserted.lastInsertRowid, nome, sobrenome });
+    return res.status(201).json({ id: inserted.id, nome, sobrenome });
   } catch (error) {
     next(error);
   }
 });
 
 // PUT — atualiza um existente
-router.put("/:id", (req, res, next) => {
+router.put("/:id", async (req, res, next) => {
   try {
     const result = contatoSchema.safeParse(req.body);
 
@@ -70,28 +71,31 @@ router.put("/:id", (req, res, next) => {
 
     const { nome, sobrenome } = result.data;
 
-    const updated = db
-      .prepare("UPDATE contatos SET nome = ?, sobrenome = ? WHERE id = ?")
-      .run(nome, sobrenome, Number(req.params.id));
+    const {
+      rows: [updated],
+    } = await db.query(
+      "UPDATE contatos SET nome = $1, sobrenome = $2 WHERE id = $3 RETURNING *",
+      [nome, sobrenome, req.params.id],
+    );
 
-    if (updated.changes === 0)
-      return res.status(404).json({ erro: "Não encontrado" });
+    if (!updated) return res.status(404).json({ erro: "Não encontrado" });
 
-    res.json({ id: Number(req.params.id), nome, sobrenome });
+    res.json({ id: updated.id, nome, sobrenome });
   } catch (error) {
     next(error);
   }
 });
 
 // DELETE — remove
-router.delete("/:id", (req, res, next) => {
+router.delete("/:id", async (req, res, next) => {
   try {
-    const deleted = db
-      .prepare("DELETE FROM contatos WHERE id = ?")
-      .run(Number(req.params.id));
+    const {
+      rows: [deleted],
+    } = await db.query("DELETE FROM contatos WHERE id = $1 RETURNING *", [
+      Number(req.params.id),
+    ]);
 
-    if (deleted.changes === 0)
-      return res.status(404).json({ erro: "Não encontrado" });
+    if (!deleted) return res.status(404).json({ erro: "Não encontrado" });
 
     res.status(204).send();
   } catch (error) {

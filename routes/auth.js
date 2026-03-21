@@ -25,22 +25,22 @@ router.post("/registro", async (req, res, next) => {
     const { email, senha } = result.data;
     const hashedPassword = await bcrypt.hash(senha, 10);
 
-    const existingUser = db
-      .prepare("SELECT * FROM usuarios WHERE email = ?")
-      .get(email);
+    const {
+      rows: [existingUser],
+    } = await db.query("SELECT * FROM usuarios WHERE email = $1", [email]);
     if (existingUser) {
       return res.status(400).json({ erro: "Email já registrado" });
     }
 
-    const created = db
-      .prepare("INSERT INTO usuarios (email, senha) VALUES (?, ?)")
-      .run(email, hashedPassword);
+    const {
+      rows: [created],
+    } = await db.query(
+      "INSERT INTO usuarios (email, senha) VALUES ($1, $2) RETURNING *",
+      [email, hashedPassword],
+    );
 
-    res.status(201).json({ id: created.lastInsertRowid, email });
+    res.status(201).json({ id: created.id, email });
   } catch (error) {
-    if (error.code === "SQLITE_CONSTRAINT_UNIQUE") {
-      return res.status(400).json({ erro: "Email já registrado" });
-    }
     next(error);
   }
 });
@@ -55,9 +55,10 @@ router.post("/login", async (req, res, next) => {
     }
     const { email, senha } = result.data;
 
-    const user = db
-      .prepare("SELECT * FROM usuarios WHERE email = ?")
-      .get(email);
+    const {
+      rows: [user],
+    } = await db.query("SELECT * FROM usuarios WHERE email = $1", [email]);
+
     if (!user) {
       return res.status(400).json({ erro: "Email ou senha inválidos" });
     }
