@@ -9,6 +9,7 @@ const productSchema = z.object({
   description: z.string().optional(),
   price: z
     .number({ error: "Price is required" })
+    .int("Price must be an integer in cents")
     .positive("Price must be greater than zero"),
   category: z.string().optional(),
   file_url: z

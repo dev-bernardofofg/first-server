@@ -168,6 +168,15 @@ All error messages in **English**:
 
 ---
 
+## Monetary Values
+
+- All monetary values are stored and transmitted as **integers in cents** (`INTEGER` in the DB)
+- Examples: `price: 1000` = $10.00, `total: 9990` = $99.90
+- The frontend is responsible for formatting/converting to display format
+- Never use `NUMERIC` or `DECIMAL` for money — avoids floating point issues
+
+---
+
 ## Code Style
 
 - **ESM imports** (`import/export`) — no CommonJS

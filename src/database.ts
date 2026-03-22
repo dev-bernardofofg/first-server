@@ -33,7 +33,7 @@ async function initializeDatabase(): Promise<void> {
       id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       description TEXT,
-      price NUMERIC(10,2) NOT NULL,
+      price INTEGER NOT NULL,
       category TEXT,
       file_url TEXT NOT NULL,
       active BOOLEAN DEFAULT TRUE,
@@ -58,7 +58,7 @@ async function initializeDatabase(): Promise<void> {
       user_id INTEGER REFERENCES users(id) NOT NULL,
       coupon_id INTEGER REFERENCES coupons(id),
       status TEXT NOT NULL DEFAULT 'pending',
-      total NUMERIC(10,2) NOT NULL,
+      total INTEGER NOT NULL,
       stripe_payment_id TEXT,
       created_at TIMESTAMP DEFAULT NOW()
     )
@@ -69,7 +69,7 @@ async function initializeDatabase(): Promise<void> {
       id SERIAL PRIMARY KEY,
       order_id INTEGER REFERENCES orders(id) NOT NULL,
       product_id INTEGER REFERENCES products(id) NOT NULL,
-      price NUMERIC(10,2) NOT NULL,
+      price INTEGER NOT NULL,
       download_token TEXT UNIQUE,
       token_expires_at TIMESTAMP,
       download_count INTEGER DEFAULT 0

@@ -36,7 +36,7 @@ export class OrdersService {
     }
 
     const subtotal = products.reduce((sum, p) => sum + Number(p!.price), 0);
-    const total = parseFloat((subtotal * (1 - discount / 100)).toFixed(2));
+    const total = Math.round(subtotal * (1 - discount / 100));
 
     return this.ordersRepository.create({
       userId,

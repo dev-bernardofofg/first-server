@@ -27,7 +27,7 @@ beforeAll(async () => {
     rows: [product],
   } = await db.query(
     `INSERT INTO products (name, price, file_url) VALUES ($1, $2, $3) RETURNING *`,
-    ["Test Product", 100.0, "https://example.com/test.pdf"],
+    ["Test Product", 10000, "https://example.com/test.pdf"],
   );
   productId = product.id;
 
@@ -73,7 +73,7 @@ describe("POST /orders", () => {
     expect(res.body.data).toMatchObject({
       id: expect.any(Number),
       status: "pending",
-      total: "100.00",
+      total: 10000,
     });
     orderId = res.body.data.id;
   });
@@ -87,7 +87,7 @@ describe("POST /orders", () => {
     expect(res.status).toBe(201);
     expect(res.body.data).toMatchObject({
       status: "pending",
-      total: "90.00",
+      total: 9000,
     });
   });
 
@@ -163,7 +163,7 @@ describe("GET /orders", () => {
         expect.objectContaining({
           id: expect.any(Number),
           status: expect.any(String),
-          total: expect.any(String),
+          total: expect.any(Number),
           items: expect.any(Array),
         }),
       ]),
