@@ -130,7 +130,7 @@ describe("DELETE /contacts/:id", () => {
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(404);
-    expect(res.body).toEqual({ error: { message: "Not found" } });
+    expect(res.body).toEqual({ error: { message: "Contact not found" } });
   });
 });
 

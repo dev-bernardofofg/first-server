@@ -2,6 +2,8 @@ import type { Request, Response } from "express";
 import { z } from "zod";
 import type { ProductsService } from "./products.service";
 
+const idSchema = z.coerce.number().int().positive();
+
 const productSchema = z.object({
   name: z.string({ error: "Name is required" }).min(1, "Name is required"),
   description: z.string().optional(),
@@ -23,7 +25,7 @@ export class ProductsController {
   };
 
   getById = async (req: Request, res: Response) => {
-    const product = await this.productsService.getById(Number(req.params.id));
+    const product = await this.productsService.getById(idSchema.parse(req.params.id));
     res.json({ data: product });
   };
 
@@ -36,14 +38,14 @@ export class ProductsController {
   update = async (req: Request, res: Response) => {
     const data = productSchema.parse(req.body);
     const product = await this.productsService.update(
-      Number(req.params.id),
+      idSchema.parse(req.params.id),
       data,
     );
     res.json({ data: product });
   };
 
   delete = async (req: Request, res: Response) => {
-    await this.productsService.delete(Number(req.params.id));
+    await this.productsService.delete(idSchema.parse(req.params.id));
     res.status(204).send();
   };
 }

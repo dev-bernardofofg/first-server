@@ -173,5 +173,5 @@ All error messages in **English**:
 - **ESM imports** (`import/export`) — no CommonJS
 - **Strict TypeScript** — `strict: true` in tsconfig
 - **Zod** for all request body validation
-- Error handling via `try/catch` + `next(error)` pattern
+- No `try/catch` in controllers — Express 5 catches async errors automatically and forwards to error middleware
 - No `return res.json()` — use `res.json(); return;` (Express 5 + TS)

@@ -10,6 +10,13 @@ export class UsersRepository {
     return user ?? null;
   }
 
+  async findById(id: number) {
+    const {
+      rows: [user],
+    } = await this.db.query("SELECT * FROM users WHERE id = $1", [id]);
+    return user ?? null;
+  }
+
   async create(email: string, hashedPassword: string) {
     const {
       rows: [user],

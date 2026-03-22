@@ -2,6 +2,8 @@ import type { Request, Response } from "express";
 import { z } from "zod";
 import type { ContactsService } from "./contacts.service";
 
+const idSchema = z.coerce.number().int().positive();
+
 const contactSchema = z.object({
   name: z.string({ error: "Name is required" }).min(1, "Name is required"),
   last_name: z
@@ -18,7 +20,7 @@ export class ContactsController {
   };
 
   getById = async (req: Request, res: Response) => {
-    const contact = await this.contactsService.getById(Number(req.params.id));
+    const contact = await this.contactsService.getById(idSchema.parse(req.params.id));
     res.json({ data: contact });
   };
 
@@ -31,7 +33,7 @@ export class ContactsController {
   update = async (req: Request, res: Response) => {
     const { name, last_name } = contactSchema.parse(req.body);
     const contact = await this.contactsService.update(
-      Number(req.params.id),
+      idSchema.parse(req.params.id),
       name,
       last_name,
     );
@@ -39,7 +41,7 @@ export class ContactsController {
   };
 
   delete = async (req: Request, res: Response) => {
-    await this.contactsService.delete(Number(req.params.id));
+    await this.contactsService.delete(idSchema.parse(req.params.id));
     res.status(204).send();
   };
 }

@@ -10,23 +10,22 @@ export class ContactsService {
 
   async getById(id: number) {
     const contact = await this.contactsRepository.findById(id);
-    if (!contact) throw new NotFoundError("Not found");
+    if (!contact) throw new NotFoundError("Contact not found");
     return contact;
   }
 
   async create(name: string, lastName: string) {
-    const contact = await this.contactsRepository.create(name, lastName);
-    return { id: contact.id, name, last_name: lastName };
+    return this.contactsRepository.create(name, lastName);
   }
 
   async update(id: number, name: string, lastName: string) {
     const contact = await this.contactsRepository.update(id, name, lastName);
-    if (!contact) throw new NotFoundError("Not found");
-    return { id: contact.id, name, last_name: lastName };
+    if (!contact) throw new NotFoundError("Contact not found");
+    return contact;
   }
 
   async delete(id: number) {
     const contact = await this.contactsRepository.delete(id);
-    if (!contact) throw new NotFoundError("Not found");
+    if (!contact) throw new NotFoundError("Contact not found");
   }
 }

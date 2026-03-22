@@ -28,14 +28,6 @@ async function initializeDatabase(): Promise<void> {
     )
   `);
 
-  // Add columns to existing users table
-  await db.query(`
-    ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'customer'
-  `);
-  await db.query(`
-    ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()
-  `);
-
   await db.query(`
     CREATE TABLE IF NOT EXISTS products (
       id SERIAL PRIMARY KEY,
