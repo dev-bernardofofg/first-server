@@ -1,8 +1,8 @@
-import crypto from "node:crypto";
 import AbacatePay from "abacatepay-nodejs-sdk";
+import crypto from "node:crypto";
 import { NotFoundError, ValidationError } from "../../shared/errors/app-error";
-import type { OrdersRepository } from "../orders/orders.repository";
 import type { CouponsRepository } from "../coupons/coupons.repository";
+import type { OrdersRepository } from "../orders/orders.repository";
 
 const TOKEN_EXPIRY_HOURS = 48;
 const MAX_DOWNLOADS = 3;
@@ -11,7 +11,7 @@ export class PaymentsService {
   constructor(
     private ordersRepository: OrdersRepository,
     private couponsRepository: CouponsRepository,
-  ) {}
+  ) { }
 
   async createCheckout(orderId: number, userId: number) {
     const order = await this.ordersRepository.findByIdForCheckout(orderId, userId);
@@ -39,7 +39,9 @@ export class PaymentsService {
     });
 
     const billingResult = billing as any;
-    if (billingResult.error) throw new ValidationError(`Payment gateway error: ${billingResult.error}`);
+    if (billingResult.error || !billingResult.data) {
+      throw new ValidationError(`Payment gateway error: ${JSON.stringify(billingResult)}`);
+    }
 
     await this.ordersRepository.setPaymentId(orderId, billingResult.data.id);
 
