@@ -6,6 +6,7 @@ interface CreateUserData {
   name: string;
   lastName: string;
   phone: string | null;
+  taxId: string | null;
   address: string | null;
   city: string | null;
   state: string | null;
@@ -41,8 +42,8 @@ export class UsersRepository {
     const {
       rows: [user],
     } = await this.db.query(
-      `INSERT INTO users (email, password, name, last_name, phone, address, city, state, country, zip_code)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `INSERT INTO users (email, password, name, last_name, phone, tax_id, address, city, state, country, zip_code)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING id, email, name, last_name, role`,
       [
         data.email,
@@ -50,6 +51,7 @@ export class UsersRepository {
         data.name,
         data.lastName,
         data.phone,
+        data.taxId,
         data.address,
         data.city,
         data.state,

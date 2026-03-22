@@ -12,6 +12,7 @@ const registerSchema = z.object({
     .string({ error: "Last name is required" })
     .min(1, "Last name is required"),
   phone: z.string().optional(),
+  tax_id: z.string().optional(),
   address: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),

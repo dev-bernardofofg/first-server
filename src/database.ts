@@ -19,6 +19,7 @@ async function initializeDatabase(): Promise<void> {
       name TEXT NOT NULL,
       last_name TEXT NOT NULL,
       phone TEXT,
+      tax_id TEXT,
       address TEXT,
       city TEXT,
       state TEXT,
@@ -97,6 +98,11 @@ async function initializeDatabase(): Promise<void> {
   `);
 }
 
+async function runMigrations(): Promise<void> {
+  await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS tax_id TEXT`);
+}
+
 initializeDatabase().catch(console.error);
+runMigrations().catch(console.error);
 
 export default db;

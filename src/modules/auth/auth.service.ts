@@ -9,6 +9,7 @@ interface RegisterData {
   name: string;
   last_name: string;
   phone?: string;
+  tax_id?: string;
   address?: string;
   city?: string;
   state?: string;
@@ -30,6 +31,7 @@ export class AuthService {
       name: data.name,
       lastName: data.last_name,
       phone: data.phone ?? null,
+      taxId: data.tax_id ?? null,
       address: data.address ?? null,
       city: data.city ?? null,
       state: data.state ?? null,

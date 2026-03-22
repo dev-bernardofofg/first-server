@@ -33,6 +33,7 @@ export class PaymentsService {
         name: `${order.user.name} ${order.user.last_name}`,
         email: order.user.email,
         cellphone: order.user.phone ?? "00000000000",
+        taxId: order.user.tax_id ?? "00000000000",
       },
     };
 
