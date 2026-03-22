@@ -23,6 +23,13 @@ export class UsersRepository {
     return user ?? null;
   }
 
+  async findAll() {
+    const { rows } = await this.db.query(
+      "SELECT id, email, name, last_name, phone, address, city, state, country, zip_code, role, created_at FROM users ORDER BY created_at DESC",
+    );
+    return rows;
+  }
+
   async findById(id: number) {
     const {
       rows: [user],

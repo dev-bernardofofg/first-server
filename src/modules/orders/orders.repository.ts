@@ -39,6 +39,35 @@ export class OrdersRepository {
     }
   }
 
+  async findAll() {
+    const { rows } = await this.db.query(
+      `SELECT o.id, o.status, o.total, o.stripe_payment_id, o.coupon_id, o.created_at, o.updated_at,
+        json_build_object('id', u.id, 'email', u.email, 'name', u.name, 'last_name', u.last_name) AS user,
+        COALESCE(
+          json_agg(
+            json_build_object('id', oi.id, 'product_id', oi.product_id, 'price', oi.price)
+          ) FILTER (WHERE oi.id IS NOT NULL),
+          '[]'
+        ) AS items
+       FROM orders o
+       JOIN users u ON u.id = o.user_id
+       LEFT JOIN order_items oi ON oi.order_id = o.id
+       GROUP BY o.id, u.id
+       ORDER BY o.created_at DESC`,
+    );
+    return rows;
+  }
+
+  async updateStatus(id: number, status: string) {
+    const {
+      rows: [order],
+    } = await this.db.query(
+      "UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *",
+      [status, id],
+    );
+    return order ?? null;
+  }
+
   async findAllByUserId(userId: number) {
     const { rows } = await this.db.query(
       `SELECT o.*,

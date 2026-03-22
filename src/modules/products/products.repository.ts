@@ -13,6 +13,13 @@ interface ProductData {
 export class ProductsRepository {
   constructor(private db: pg.Pool) {}
 
+  async findAll() {
+    const { rows } = await this.db.query(
+      "SELECT * FROM products ORDER BY created_at DESC",
+    );
+    return rows;
+  }
+
   async findAllActive() {
     const { rows } = await this.db.query(
       "SELECT * FROM products WHERE active = TRUE ORDER BY created_at DESC",
