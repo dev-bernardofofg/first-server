@@ -47,13 +47,15 @@ export class PaymentsService {
   }
 
   async handleWebhook(rawBody: Buffer, signature: string, querySecret: string) {
+    // Validate query param secret
     if (querySecret !== process.env.ABACATEPAY_WEBHOOK_SECRET) {
       throw new ValidationError("Invalid webhook secret");
     }
 
-    if (signature) {
+    // Validate HMAC-SHA256 signature using AbacatePay's public key
+    if (signature && process.env.ABACATEPAY_PUBLIC_KEY) {
       const expected = crypto
-        .createHmac("sha256", process.env.ABACATEPAY_WEBHOOK_SECRET!)
+        .createHmac("sha256", process.env.ABACATEPAY_PUBLIC_KEY)
         .update(rawBody)
         .digest("base64");
 
@@ -67,7 +69,7 @@ export class PaymentsService {
     const payload = JSON.parse(rawBody.toString("utf8"));
     if (payload.event !== "checkout.completed") return;
 
-    const billingId: string = payload.data?.id;
+    const billingId: string = payload.data?.checkout?.id;
     if (!billingId) return;
 
     await this.processPayment(billingId);

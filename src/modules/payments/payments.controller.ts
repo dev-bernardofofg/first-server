@@ -17,8 +17,9 @@ export class PaymentsController {
 
   webhook = async (req: Request, res: Response) => {
     const signature = String(req.headers["x-webhook-signature"] ?? "");
-    const secret = String(req.query.secret ?? "");
-    await this.paymentsService.handleWebhook(req.body as Buffer, signature, secret);
+    const secret = String(req.query.webhookSecret ?? "");
+    const rawBody: Buffer = (req as any).rawBody ?? Buffer.from(JSON.stringify(req.body));
+    await this.paymentsService.handleWebhook(rawBody, signature, secret);
     res.status(200).send();
   };
 }

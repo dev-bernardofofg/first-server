@@ -72,7 +72,11 @@ const downloadsController = new DownloadsController(downloadsService);
 // --- App ---
 
 const app = express();
-app.use(express.json());
+app.use(express.json({
+  verify: (req: any, _res, buf) => {
+    req.rawBody = buf;
+  },
+}));
 
 app.use("/auth", createAuthRoutes(authController));
 app.use("/products", createProductsRoutes(productsController));
