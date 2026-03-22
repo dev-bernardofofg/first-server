@@ -1,4 +1,3 @@
-import AbacatePay from "abacatepay-nodejs-sdk";
 import crypto from "node:crypto";
 import { NotFoundError, ValidationError } from "../../shared/errors/app-error";
 import type { CouponsRepository } from "../coupons/coupons.repository";
@@ -6,21 +5,20 @@ import type { OrdersRepository } from "../orders/orders.repository";
 
 const TOKEN_EXPIRY_HOURS = 48;
 const MAX_DOWNLOADS = 3;
+const ABACATEPAY_BASE = "https://api.abacatepay.com/v1";
 
 export class PaymentsService {
   constructor(
     private ordersRepository: OrdersRepository,
     private couponsRepository: CouponsRepository,
-  ) { }
+  ) {}
 
   async createCheckout(orderId: number, userId: number) {
     const order = await this.ordersRepository.findByIdForCheckout(orderId, userId);
     if (!order) throw new NotFoundError("Order not found");
     if (order.status !== "pending") throw new ValidationError("Order is not pending");
 
-    const abacate = AbacatePay(process.env.ABACATEPAY_API_KEY!);
-
-    const billing = await abacate.billing.create({
+    const body = {
       frequency: "ONE_TIME",
       methods: ["PIX", "CARD"],
       products: order.items.map((item: any) => ({
@@ -36,16 +34,28 @@ export class PaymentsService {
         email: order.user.email,
         ...(order.user.phone ? { cellphone: order.user.phone } : {}),
       },
+    };
+
+    const response = await fetch(`${ABACATEPAY_BASE}/billing/create`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.ABACATEPAY_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
     });
 
-    const billingResult = billing as any;
-    if (billingResult.error || !billingResult.data) {
-      throw new ValidationError(`Payment gateway error: ${JSON.stringify(billingResult)}`);
+    const result = await response.json() as any;
+
+    if (!response.ok || result.error || !result.data) {
+      throw new ValidationError(
+        `Payment gateway error (${response.status}): ${JSON.stringify(result)}`,
+      );
     }
 
-    await this.ordersRepository.setPaymentId(orderId, billingResult.data.id);
+    await this.ordersRepository.setPaymentId(orderId, result.data.id);
 
-    return { checkout_url: billingResult.data.url };
+    return { checkout_url: result.data.url };
   }
 
   async handleWebhook(rawBody: Buffer, signature: string, querySecret: string) {
