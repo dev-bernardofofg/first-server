@@ -100,7 +100,14 @@ async function initializeDatabase(): Promise<void> {
 
 async function runMigrations(): Promise<void> {
   await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS tax_id TEXT`);
-  await db.query(`ALTER TABLE orders RENAME COLUMN stripe_payment_id TO payment_id`);
+  await db.query(`
+    DO $$
+    BEGIN
+      IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='stripe_payment_id') THEN
+        ALTER TABLE orders RENAME COLUMN stripe_payment_id TO payment_id;
+      END IF;
+    END $$
+  `);
 }
 
 initializeDatabase().catch(console.error);
