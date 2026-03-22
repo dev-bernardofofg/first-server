@@ -7,11 +7,11 @@ The customer buys, pays via Stripe, and receives a temporary secure download lin
 
 ## Current Stack
 
-- Node.js + Express (TypeScript)
+- Node.js + Express 5 (TypeScript)
 - PostgreSQL (production on Railway)
 - Zod 4 (validation)
 - JWT + bcrypt (authentication)
-- Vitest + Supertest (tests)
+- Vitest + Supertest (integration tests)
 - tsx (TypeScript runner)
 
 ## Current Project Structure
@@ -21,17 +21,25 @@ first-server/
 ├── src/
 │   ├── server.ts
 │   ├── app.ts                        # composition root — wires DI
-│   ├── database.ts
+│   ├── database.ts                   # pool + CREATE TABLE IF NOT EXISTS (all tables)
 │   ├── modules/
 │   │   ├── auth/                     # controller, service, routes
-│   │   ├── contacts/                 # controller, service, repository, routes
-│   │   └── products/                 # controller, service, repository, routes
+│   │   ├── products/                 # controller, service, repository, routes
+│   │   ├── orders/                   # controller, service, repository, routes
+│   │   ├── coupons/                  # controller, service, repository, routes
+│   │   └── admin/                    # controller, service, routes
 │   ├── shared/
 │   │   ├── errors/app-error.ts
-│   │   ├── middlewares/              # auth, role, error
+│   │   ├── middlewares/              # auth.ts, role.ts, error.ts
 │   │   └── repositories/            # users.repository.ts
+│   ├── scripts/
+│   │   └── seed-admin.ts             # npm run seed:admin
 │   └── tests/
-│       └── contacts.test.ts
+│       ├── auth.test.ts
+│       ├── products.test.ts
+│       ├── orders.test.ts
+│       ├── coupons.test.ts
+│       └── admin.test.ts
 ├── markdown-helpers/
 │   ├── initial.md
 │   ├── conventions.md
@@ -44,7 +52,7 @@ first-server/
 
 ## Database Schema
 
-### Tables
+All monetary values are **integers in cents** (e.g., R$49.90 = `4990`). The frontend handles display formatting.
 
 ```sql
 -- Users (role: 'customer' or 'admin')
@@ -53,14 +61,15 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT UNIQUE NOT NULL,
   password TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'customer',
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
--- Contacts (base example from initial project)
-CREATE TABLE IF NOT EXISTS contacts (
-  id SERIAL PRIMARY KEY,
   name TEXT NOT NULL,
-  last_name TEXT NOT NULL
+  last_name TEXT NOT NULL,
+  phone TEXT,
+  address TEXT,
+  city TEXT,
+  state TEXT,
+  country TEXT,
+  zip_code TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
 );
 
 -- Digital products
@@ -68,21 +77,27 @@ CREATE TABLE IF NOT EXISTS products (
   id SERIAL PRIMARY KEY,
   name TEXT NOT NULL,
   description TEXT,
-  price NUMERIC(10,2) NOT NULL,
+  price INTEGER NOT NULL,
   category TEXT,
+  image_url TEXT,
+  slug TEXT UNIQUE,
   file_url TEXT NOT NULL,
   active BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMP DEFAULT NOW()
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
 );
 
 -- Discount coupons
 CREATE TABLE IF NOT EXISTS coupons (
   id SERIAL PRIMARY KEY,
   code TEXT UNIQUE NOT NULL,
-  discount NUMERIC(5,2) NOT NULL,
+  discount INTEGER NOT NULL,
+  discount_type TEXT NOT NULL DEFAULT 'percentage', -- 'percentage' or 'fixed'
+  min_order_value INTEGER,
   expires_at TIMESTAMP NOT NULL,
   usage_limit INTEGER NOT NULL,
-  current_usage INTEGER DEFAULT 0
+  current_usage INTEGER DEFAULT 0,
+  active BOOLEAN DEFAULT TRUE
 );
 
 -- Orders
@@ -91,9 +106,10 @@ CREATE TABLE IF NOT EXISTS orders (
   user_id INTEGER REFERENCES users(id) NOT NULL,
   coupon_id INTEGER REFERENCES coupons(id),
   status TEXT NOT NULL DEFAULT 'pending', -- pending | paid | cancelled
-  total NUMERIC(10,2) NOT NULL,
+  total INTEGER NOT NULL,
   stripe_payment_id TEXT,
-  created_at TIMESTAMP DEFAULT NOW()
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
 );
 
 -- Order items
@@ -101,10 +117,11 @@ CREATE TABLE IF NOT EXISTS order_items (
   id SERIAL PRIMARY KEY,
   order_id INTEGER REFERENCES orders(id) NOT NULL,
   product_id INTEGER REFERENCES products(id) NOT NULL,
-  price NUMERIC(10,2) NOT NULL,
+  price INTEGER NOT NULL,
   download_token TEXT UNIQUE,
   token_expires_at TIMESTAMP,
-  download_count INTEGER DEFAULT 0
+  download_count INTEGER DEFAULT 0,
+  max_downloads INTEGER
 );
 
 -- Reviews
@@ -121,16 +138,16 @@ CREATE TABLE IF NOT EXISTS reviews (
 
 ---
 
-## Planned Routes
+## Implemented Routes
 
-### Auth (done)
+### Auth
 
-| Method | Route          | Description     |
-| ------ | -------------- | --------------- |
-| POST   | /auth/register | Create new user |
-| POST   | /auth/login    | Returns JWT     |
+| Method | Route          | Auth   | Description            |
+| ------ | -------------- | ------ | ---------------------- |
+| POST   | /auth/register | Public | Register (role=customer) |
+| POST   | /auth/login    | Public | Returns JWT            |
 
-### Products (done)
+### Products
 
 | Method | Route         | Auth   | Description          |
 | ------ | ------------- | ------ | -------------------- |
@@ -142,42 +159,67 @@ CREATE TABLE IF NOT EXISTS reviews (
 
 ### Orders
 
-| Method | Route       | Auth     | Description                         |
-| ------ | ----------- | -------- | ----------------------------------- |
-| POST   | /orders     | Customer | Create order with items and coupon  |
-| GET    | /orders     | Customer | List authenticated user's orders    |
-| GET    | /orders/:id | Customer | Order detail                        |
-
-### Payments (Stripe)
-
-| Method | Route              | Auth     | Description                          |
-| ------ | ------------------ | -------- | ------------------------------------ |
-| POST   | /payments/checkout | Customer | Create Stripe checkout session       |
-| POST   | /payments/webhook  | Public   | Receive Stripe event (payment done)  |
-
-### Downloads
-
-| Method | Route            | Auth   | Description                      |
-| ------ | ---------------- | ------ | -------------------------------- |
-| GET    | /downloads/:token | Public | Validate token and return file URL |
+| Method | Route       | Auth     | Description                        |
+| ------ | ----------- | -------- | ---------------------------------- |
+| POST   | /orders     | Customer | Create order with items and coupon |
+| GET    | /orders     | Customer | List authenticated user's orders   |
+| GET    | /orders/:id | Customer | Order detail with items            |
 
 ### Coupons
 
-| Method | Route          | Auth     | Description                  |
-| ------ | -------------- | -------- | ---------------------------- |
-| POST   | /coupons       | Admin    | Create coupon                |
-| GET    | /coupons/:code | Customer | Validate and return discount |
+| Method | Route          | Auth   | Description                          |
+| ------ | -------------- | ------ | ------------------------------------ |
+| GET    | /coupons/:code | Public | Validate coupon and return details   |
+| GET    | /coupons       | Admin  | List all coupons                     |
+| POST   | /coupons       | Admin  | Create coupon                        |
+| PUT    | /coupons/:id   | Admin  | Update coupon                        |
+| DELETE | /coupons/:id   | Admin  | Deactivate coupon                    |
+
+### Admin Backoffice
+
+| Method | Route                    | Auth  | Description                    |
+| ------ | ------------------------ | ----- | ------------------------------ |
+| GET    | /admin/orders            | Admin | List all orders (with user)    |
+| PUT    | /admin/orders/:id/status | Admin | Update order status            |
+| GET    | /admin/users             | Admin | List all users (no password)   |
+| GET    | /admin/products          | Admin | List all products (incl. inactive) |
+
+---
+
+## Pending Routes
+
+### Payments (Stripe — last)
+
+| Method | Route              | Auth     | Description                         |
+| ------ | ------------------ | -------- | ----------------------------------- |
+| POST   | /payments/checkout | Customer | Create Stripe checkout session      |
+| POST   | /payments/webhook  | Public   | Receive Stripe event (payment done) |
+
+### Downloads
+
+| Method | Route             | Auth   | Description                        |
+| ------ | ----------------- | ------ | ---------------------------------- |
+| GET    | /downloads/:token | Public | Validate token and return file URL |
 
 ### Reviews
 
-| Method | Route                  | Auth     | Description                        |
-| ------ | ---------------------- | -------- | ---------------------------------- |
-| POST   | /reviews               | Customer | Create review (buyers only)        |
-| GET    | /reviews/product/:id   | Public   | List reviews for a product         |
+| Method | Route                | Auth     | Description                 |
+| ------ | -------------------- | -------- | --------------------------- |
+| POST   | /reviews             | Customer | Create review (buyers only) |
+| GET    | /reviews/product/:id | Public   | List reviews for a product  |
 
 ---
 
 ## Business Rules
+
+### Order Creation
+
+1. Customer sends `product_ids[]` and optional `coupon_code`
+2. All products must exist and be active
+3. Coupon (if provided) must be: active, not expired, not exhausted, meet `min_order_value`
+4. `discount_type: 'percentage'` — total = round(subtotal × (1 - discount/100))
+5. `discount_type: 'fixed'` — total = max(0, subtotal - discount)
+6. Order is created atomically (transaction): order + order_items in one query
 
 ### Payment and Delivery
 
@@ -190,9 +232,8 @@ CREATE TABLE IF NOT EXISTS reviews (
 
 ### Coupons
 
-- Check if coupon hasn't expired (`expires_at > NOW()`)
-- Check if usage is available (`current_usage < usage_limit`)
-- Increment `current_usage` on payment confirmation (not on order creation)
+- Checked at order creation (active, not expired, not exhausted, min_order_value)
+- `current_usage` is incremented on payment confirmation (webhook), not on order creation
 
 ### Reviews
 
@@ -201,8 +242,9 @@ CREATE TABLE IF NOT EXISTS reviews (
 
 ### Access Control (role)
 
-- `admin` → can create/edit/delete products and coupons
+- `admin` → backoffice access + product/coupon management
 - `customer` → can buy, review, and view own orders
+- Admin users are created via `npm run seed:admin` (reads from `.env`)
 
 ---
 
@@ -210,13 +252,17 @@ CREATE TABLE IF NOT EXISTS reviews (
 
 1. ~~Migrate to TypeScript~~ ✅
 2. ~~Database tables~~ ✅
-3. ~~Role middleware (requireAdmin)~~ ✅
-4. ~~Product routes (CRUD)~~ ✅
-5. **Order routes** — create order with items and coupon
-6. **Stripe integration** — checkout and webhook
-7. **Download system** — token generation and validation
-8. **Reviews** — with purchase verification
-9. **Tests** — cover the full purchase flow
+3. ~~Standardize API response format~~ ✅
+4. ~~Role middleware (requireAdmin)~~ ✅
+5. ~~Product routes (CRUD)~~ ✅
+6. ~~Order routes (create + list + detail)~~ ✅
+7. ~~Coupons module (admin CRUD + public validation)~~ ✅
+8. ~~Admin backoffice (orders, users, products)~~ ✅
+9. ~~Admin seed script (`npm run seed:admin`)~~ ✅
+10. ~~Tests — auth, products, orders, coupons, admin~~ ✅
+11. **Reviews** — POST /reviews + GET /reviews/product/:id
+12. **Stripe integration** — checkout + webhook
+13. **Download system** — token generation and validation
 
 ---
 
@@ -227,9 +273,16 @@ PORT=3000
 DATABASE_URL=postgresql://user:password@host:5432/database
 JWT_SECRET=long_random_secret
 NODE_ENV=development
+
+# Admin seed
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=strongpassword
+ADMIN_NAME=Admin
+ADMIN_LAST_NAME=User
+
+# Stripe (pending)
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
-STORAGE_URL=your_storage_url  # for product files
 ```
 
 ---

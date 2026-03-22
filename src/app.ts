@@ -9,6 +9,7 @@ import { UsersRepository } from "./shared/repositories/users.repository";
 import { ProductsRepository } from "./modules/products/products.repository";
 import { CouponsRepository } from "./modules/coupons/coupons.repository";
 import { OrdersRepository } from "./modules/orders/orders.repository";
+import { ReviewsRepository } from "./modules/reviews/reviews.repository";
 
 // Services
 import { AuthService } from "./modules/auth/auth.service";
@@ -16,6 +17,7 @@ import { ProductsService } from "./modules/products/products.service";
 import { CouponsService } from "./modules/coupons/coupons.service";
 import { OrdersService } from "./modules/orders/orders.service";
 import { AdminService } from "./modules/admin/admin.service";
+import { ReviewsService } from "./modules/reviews/reviews.service";
 
 // Controllers
 import { AuthController } from "./modules/auth/auth.controller";
@@ -23,6 +25,7 @@ import { ProductsController } from "./modules/products/products.controller";
 import { CouponsController } from "./modules/coupons/coupons.controller";
 import { OrdersController } from "./modules/orders/orders.controller";
 import { AdminController } from "./modules/admin/admin.controller";
+import { ReviewsController } from "./modules/reviews/reviews.controller";
 
 // Routes
 import { createAuthRoutes } from "./modules/auth/auth.routes";
@@ -30,6 +33,7 @@ import { createProductsRoutes } from "./modules/products/products.routes";
 import { createCouponsRoutes } from "./modules/coupons/coupons.routes";
 import { createOrdersRoutes } from "./modules/orders/orders.routes";
 import { createAdminRoutes } from "./modules/admin/admin.routes";
+import { createReviewsRoutes } from "./modules/reviews/reviews.routes";
 
 // --- Dependency Injection ---
 
@@ -37,18 +41,21 @@ const usersRepository = new UsersRepository(db);
 const productsRepository = new ProductsRepository(db);
 const couponsRepository = new CouponsRepository(db);
 const ordersRepository = new OrdersRepository(db);
+const reviewsRepository = new ReviewsRepository(db);
 
 const authService = new AuthService(usersRepository);
 const productsService = new ProductsService(productsRepository);
 const couponsService = new CouponsService(couponsRepository);
 const ordersService = new OrdersService(ordersRepository, productsRepository, couponsRepository);
 const adminService = new AdminService(ordersRepository, usersRepository, productsRepository);
+const reviewsService = new ReviewsService(reviewsRepository);
 
 const authController = new AuthController(authService);
 const productsController = new ProductsController(productsService);
 const couponsController = new CouponsController(couponsService);
 const ordersController = new OrdersController(ordersService);
 const adminController = new AdminController(adminService);
+const reviewsController = new ReviewsController(reviewsService);
 
 // --- App ---
 
@@ -60,6 +67,7 @@ app.use("/products", createProductsRoutes(productsController));
 app.use("/coupons", createCouponsRoutes(couponsController));
 app.use("/orders", authenticate, createOrdersRoutes(ordersController));
 app.use("/admin", createAdminRoutes(adminController));
+app.use("/reviews", createReviewsRoutes(reviewsController));
 app.use(errorHandler);
 
 export default app;

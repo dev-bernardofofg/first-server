@@ -14,7 +14,7 @@ export class CouponsRepository {
 
   async findAll() {
     const { rows } = await this.db.query(
-      "SELECT * FROM coupons ORDER BY created_at DESC",
+      "SELECT * FROM coupons ORDER BY id DESC",
     );
     return rows;
   }
