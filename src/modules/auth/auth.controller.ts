@@ -15,12 +15,12 @@ export class AuthController {
   register = async (req: Request, res: Response) => {
     const { email, password } = userSchema.parse(req.body);
     const user = await this.authService.register(email, password);
-    res.status(201).json(user);
+    res.status(201).json({ data: user });
   };
 
   login = async (req: Request, res: Response) => {
     const { email, password } = userSchema.parse(req.body);
     const result = await this.authService.login(email, password);
-    res.json({ message: "Login successful", data: result });
+    res.json({ data: result });
   };
 }

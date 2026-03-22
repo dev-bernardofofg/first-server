@@ -25,14 +25,14 @@ describe("POST /contacts", () => {
       .send({ name: "Bernardo", last_name: "Filipe" });
 
     expect(res.status).toBe(201);
-    expect(res.body).toEqual(
+    expect(res.body.data).toEqual(
       expect.objectContaining({
         id: expect.any(Number),
         name: "Bernardo",
         last_name: "Filipe",
       }),
     );
-    contactId = res.body.id;
+    contactId = res.body.data.id;
   });
 
   it("should return error when creating contact without name", async () => {
@@ -43,8 +43,11 @@ describe("POST /contacts", () => {
 
     expect(res.status).toBe(400);
     expect(res.body).toEqual({
-      errors: {
-        name: ["Name is required"],
+      error: {
+        message: "Validation failed",
+        fields: {
+          name: ["Name is required"],
+        },
       },
     });
   });
@@ -57,7 +60,12 @@ describe("POST /contacts", () => {
 
     expect(res.status).toBe(400);
     expect(res.body).toEqual({
-      errors: { last_name: ["Last name is required"] },
+      error: {
+        message: "Validation failed",
+        fields: {
+          last_name: ["Last name is required"],
+        },
+      },
     });
   });
 
@@ -67,7 +75,7 @@ describe("POST /contacts", () => {
       .send({ name: "Bernardo", last_name: "Filipe" });
 
     expect(res.status).toBe(401);
-    expect(res.body).toEqual({ error: "Token not provided" });
+    expect(res.body).toEqual({ error: { message: "Token not provided" } });
   });
 });
 
@@ -78,7 +86,7 @@ describe("GET /contacts", () => {
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual(
+    expect(res.body.data).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: expect.any(Number),
@@ -98,7 +106,7 @@ describe("PUT /contacts/:id", () => {
       .send({ name: "Bernardo", last_name: "Filipe" });
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({
+    expect(res.body.data).toEqual({
       id: expect.any(Number),
       name: "Bernardo",
       last_name: "Filipe",
@@ -122,7 +130,7 @@ describe("DELETE /contacts/:id", () => {
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(404);
-    expect(res.body).toEqual({ error: "Not found" });
+    expect(res.body).toEqual({ error: { message: "Not found" } });
   });
 });
 
@@ -134,12 +142,12 @@ describe("GET /contacts/:id", () => {
       .send({ name: "Ana", last_name: "Silva" });
 
     const res = await request(app)
-      .get(`/contacts/${created.body.id}`)
+      .get(`/contacts/${created.body.data.id}`)
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({
-      id: created.body.id,
+    expect(res.body.data).toEqual({
+      id: created.body.data.id,
       name: "Ana",
       last_name: "Silva",
     });

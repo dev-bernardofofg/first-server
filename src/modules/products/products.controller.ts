@@ -19,18 +19,18 @@ export class ProductsController {
 
   getAll = async (req: Request, res: Response) => {
     const products = await this.productsService.getAll();
-    res.json(products);
+    res.json({ data: products });
   };
 
   getById = async (req: Request, res: Response) => {
     const product = await this.productsService.getById(Number(req.params.id));
-    res.json(product);
+    res.json({ data: product });
   };
 
   create = async (req: Request, res: Response) => {
     const data = productSchema.parse(req.body);
     const product = await this.productsService.create(data);
-    res.status(201).json(product);
+    res.status(201).json({ data: product });
   };
 
   update = async (req: Request, res: Response) => {
@@ -39,7 +39,7 @@ export class ProductsController {
       Number(req.params.id),
       data,
     );
-    res.json(product);
+    res.json({ data: product });
   };
 
   delete = async (req: Request, res: Response) => {

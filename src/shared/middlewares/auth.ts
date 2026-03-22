@@ -17,7 +17,7 @@ function authenticate(req: Request, res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    res.status(401).json({ error: "Token not provided" });
+    res.status(401).json({ error: { message: "Token not provided" } });
     return;
   }
 
@@ -31,7 +31,7 @@ function authenticate(req: Request, res: Response, next: NextFunction): void {
     req.user = payload;
     next();
   } catch (err) {
-    res.status(401).json({ error: "Invalid or expired token" });
+    res.status(401).json({ error: { message: "Invalid or expired token" } });
   }
 }
 

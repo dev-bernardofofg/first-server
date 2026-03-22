@@ -14,18 +14,18 @@ export class ContactsController {
 
   getAll = async (req: Request, res: Response) => {
     const contacts = await this.contactsService.getAll();
-    res.json(contacts);
+    res.json({ data: contacts });
   };
 
   getById = async (req: Request, res: Response) => {
     const contact = await this.contactsService.getById(Number(req.params.id));
-    res.json(contact);
+    res.json({ data: contact });
   };
 
   create = async (req: Request, res: Response) => {
     const { name, last_name } = contactSchema.parse(req.body);
     const contact = await this.contactsService.create(name, last_name);
-    res.status(201).json(contact);
+    res.status(201).json({ data: contact });
   };
 
   update = async (req: Request, res: Response) => {
@@ -35,7 +35,7 @@ export class ContactsController {
       name,
       last_name,
     );
-    res.json(contact);
+    res.json({ data: contact });
   };
 
   delete = async (req: Request, res: Response) => {
