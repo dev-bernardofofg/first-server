@@ -1,11 +1,13 @@
 import { NotFoundError } from "../../shared/errors/app-error";
 import type { ProductsRepository } from "./products.repository";
 
-interface ProductData {
+interface ProductInput {
   name: string;
   description?: string;
   price: number;
   category?: string;
+  image_url?: string;
+  slug?: string;
   file_url: string;
 }
 
@@ -22,22 +24,26 @@ export class ProductsService {
     return product;
   }
 
-  async create(data: ProductData) {
+  async create(data: ProductInput) {
     return this.productsRepository.create({
       name: data.name,
       description: data.description ?? null,
       price: data.price,
       category: data.category ?? null,
+      image_url: data.image_url ?? null,
+      slug: data.slug ?? null,
       file_url: data.file_url,
     });
   }
 
-  async update(id: number, data: ProductData) {
+  async update(id: number, data: ProductInput) {
     const product = await this.productsRepository.update(id, {
       name: data.name,
       description: data.description ?? null,
       price: data.price,
       category: data.category ?? null,
+      image_url: data.image_url ?? null,
+      slug: data.slug ?? null,
       file_url: data.file_url,
     });
     if (!product) throw new NotFoundError("Product not found");

@@ -14,7 +14,7 @@ beforeAll(async () => {
   // Customer user
   await request(app)
     .post("/auth/register")
-    .send({ email: "orders-test@test.com", password: "123456" });
+    .send({ email: "orders-test@test.com", password: "123456", name: "Test", last_name: "User" });
 
   const loginRes = await request(app)
     .post("/auth/login")
@@ -205,7 +205,7 @@ describe("GET /orders/:id", () => {
     // Create a second user
     await request(app)
       .post("/auth/register")
-      .send({ email: "other-user@test.com", password: "123456" });
+      .send({ email: "other-user@test.com", password: "123456", name: "Other", last_name: "User" });
 
     const otherLogin = await request(app)
       .post("/auth/login")

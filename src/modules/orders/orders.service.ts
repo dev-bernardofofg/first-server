@@ -20,23 +20,31 @@ export class OrdersService {
       throw new NotFoundError(`Product ${productIds[missingIndex]} not found`);
     }
 
+    const subtotal = products.reduce((sum, p) => sum + Number(p!.price), 0);
+
     let couponId: number | null = null;
-    let discount = 0;
+    let total = subtotal;
 
     if (couponCode) {
       const coupon = await this.couponsRepository.findByCode(couponCode);
       if (!coupon) throw new NotFoundError("Coupon not found");
+      if (!coupon.active) throw new ValidationError("Coupon is not active");
       if (new Date(coupon.expires_at) < new Date())
         throw new ValidationError("Coupon has expired");
       if (coupon.current_usage >= coupon.usage_limit)
         throw new ValidationError("Coupon usage limit reached");
+      if (coupon.min_order_value && subtotal < coupon.min_order_value)
+        throw new ValidationError("Order value below coupon minimum");
 
       couponId = coupon.id;
-      discount = Number(coupon.discount);
-    }
+      const discount = Number(coupon.discount);
 
-    const subtotal = products.reduce((sum, p) => sum + Number(p!.price), 0);
-    const total = Math.round(subtotal * (1 - discount / 100));
+      if (coupon.discount_type === "fixed") {
+        total = Math.max(0, subtotal - discount);
+      } else {
+        total = Math.round(subtotal * (1 - discount / 100));
+      }
+    }
 
     return this.ordersRepository.create({
       userId,

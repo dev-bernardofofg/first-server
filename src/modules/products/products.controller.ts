@@ -12,6 +12,8 @@ const productSchema = z.object({
     .int("Price must be an integer in cents")
     .positive("Price must be greater than zero"),
   category: z.string().optional(),
+  image_url: z.string().url("Invalid image URL").optional(),
+  slug: z.string().min(1).optional(),
   file_url: z
     .string({ error: "File URL is required" })
     .min(1, "File URL is required"),
@@ -38,10 +40,7 @@ export class ProductsController {
 
   update = async (req: Request, res: Response) => {
     const data = productSchema.parse(req.body);
-    const product = await this.productsService.update(
-      idSchema.parse(req.params.id),
-      data,
-    );
+    const product = await this.productsService.update(idSchema.parse(req.params.id), data);
     res.json({ data: product });
   };
 

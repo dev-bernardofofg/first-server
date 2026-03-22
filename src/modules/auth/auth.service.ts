@@ -3,16 +3,46 @@ import jwt from "jsonwebtoken";
 import { ConflictError, UnauthorizedError } from "../../shared/errors/app-error";
 import type { UsersRepository } from "../../shared/repositories/users.repository";
 
+interface RegisterData {
+  email: string;
+  password: string;
+  name: string;
+  last_name: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  zip_code?: string;
+}
+
 export class AuthService {
   constructor(private usersRepository: UsersRepository) {}
 
-  async register(email: string, password: string) {
-    const existing = await this.usersRepository.findByEmail(email);
+  async register(data: RegisterData) {
+    const existing = await this.usersRepository.findByEmail(data.email);
     if (existing) throw new ConflictError("Email already registered");
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await this.usersRepository.create(email, hashedPassword);
-    return { id: user.id, email: user.email };
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    const user = await this.usersRepository.create({
+      email: data.email,
+      hashedPassword,
+      name: data.name,
+      lastName: data.last_name,
+      phone: data.phone ?? null,
+      address: data.address ?? null,
+      city: data.city ?? null,
+      state: data.state ?? null,
+      country: data.country ?? null,
+      zipCode: data.zip_code ?? null,
+    });
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      last_name: user.last_name,
+    };
   }
 
   async login(email: string, password: string) {
@@ -30,7 +60,7 @@ export class AuthService {
 
     return {
       token,
-      user: { id: user.id, email: user.email, role: user.role },
+      user: { id: user.id, email: user.email, name: user.name, role: user.role },
     };
   }
 }

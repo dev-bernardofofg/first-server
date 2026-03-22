@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(ls node_modules/express/lib/*.d.ts)",
+      "Bash(ls node_modules/express/*.d.ts)",
+      "Bash(npx tsc:*)",
+      "Bash(npm test:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(node -e \":*)"
+    ]
+  }
+}
