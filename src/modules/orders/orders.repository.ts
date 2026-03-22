@@ -41,7 +41,7 @@ export class OrdersRepository {
 
   async findAll() {
     const { rows } = await this.db.query(
-      `SELECT o.id, o.status, o.total, o.stripe_payment_id, o.coupon_id, o.created_at, o.updated_at,
+      `SELECT o.id, o.status, o.total, o.payment_id, o.coupon_id, o.created_at, o.updated_at,
         json_build_object('id', u.id, 'email', u.email, 'name', u.name, 'last_name', u.last_name) AS user,
         COALESCE(
           json_agg(
@@ -97,7 +97,7 @@ export class OrdersRepository {
   async findByPaymentId(paymentId: string) {
     const {
       rows: [order],
-    } = await this.db.query("SELECT * FROM orders WHERE stripe_payment_id = $1", [paymentId]);
+    } = await this.db.query("SELECT * FROM orders WHERE payment_id = $1", [paymentId]);
     return order ?? null;
   }
 
@@ -126,7 +126,7 @@ export class OrdersRepository {
 
   async setPaymentId(id: number, paymentId: string) {
     await this.db.query(
-      "UPDATE orders SET stripe_payment_id = $1, updated_at = NOW() WHERE id = $2",
+      "UPDATE orders SET payment_id = $1, updated_at = NOW() WHERE id = $2",
       [paymentId, id],
     );
   }

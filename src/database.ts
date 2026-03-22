@@ -66,7 +66,7 @@ async function initializeDatabase(): Promise<void> {
       coupon_id INTEGER REFERENCES coupons(id),
       status TEXT NOT NULL DEFAULT 'pending',
       total INTEGER NOT NULL,
-      stripe_payment_id TEXT,
+      payment_id TEXT,
       created_at TIMESTAMP DEFAULT NOW(),
       updated_at TIMESTAMP DEFAULT NOW()
     )
@@ -100,6 +100,7 @@ async function initializeDatabase(): Promise<void> {
 
 async function runMigrations(): Promise<void> {
   await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS tax_id TEXT`);
+  await db.query(`ALTER TABLE orders RENAME COLUMN stripe_payment_id TO payment_id`);
 }
 
 initializeDatabase().catch(console.error);

@@ -87,7 +87,7 @@ describe("POST /payments/webhook", () => {
   it("should mark order as paid and generate download tokens", async () => {
     // Seed the billing ID on the order
     const billingId = `bill_test_${suffix}_${orderId}`;
-    await db.query(`UPDATE orders SET stripe_payment_id = $1 WHERE id = $2`, [billingId, orderId]);
+    await db.query(`UPDATE orders SET payment_id = $1 WHERE id = $2`, [billingId, orderId]);
 
     const body = makeWebhookPayload(billingId);
 
@@ -115,7 +115,7 @@ describe("POST /payments/webhook", () => {
   it("should be idempotent — ignore already paid order", async () => {
     const billingId = `bill_idempotent_${suffix}`;
     await db.query(
-      `UPDATE orders SET stripe_payment_id = $1, status = 'paid' WHERE id = $2`,
+      `UPDATE orders SET payment_id = $1, status = 'paid' WHERE id = $2`,
       [billingId, orderId],
     );
 
