@@ -32,6 +32,9 @@ import { ReviewsController } from "./modules/reviews/reviews.controller";
 import { PaymentsController } from "./modules/payments/payments.controller";
 import { DownloadsController } from "./modules/downloads/downloads.controller";
 
+// OpenAPI
+import { openApiSpec } from "./openapi";
+
 // Routes
 import { createAuthRoutes } from "./modules/auth/auth.routes";
 import { createProductsRoutes } from "./modules/products/products.routes";
@@ -77,6 +80,8 @@ app.use(express.json({
     req.rawBody = buf;
   },
 }));
+
+app.get("/openapi.json", (_req, res) => res.json(openApiSpec));
 
 app.use("/auth", createAuthRoutes(authController));
 app.use("/products", createProductsRoutes(productsController));
