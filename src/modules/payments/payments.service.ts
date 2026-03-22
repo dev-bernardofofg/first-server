@@ -32,7 +32,7 @@ export class PaymentsService {
       customer: {
         name: `${order.user.name} ${order.user.last_name}`,
         email: order.user.email,
-        ...(order.user.phone ? { cellphone: order.user.phone } : {}),
+        cellphone: order.user.phone ?? "00000000000",
       },
     };
 
