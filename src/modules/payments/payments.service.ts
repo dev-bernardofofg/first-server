@@ -1,0 +1,94 @@
+import crypto from "node:crypto";
+import AbacatePay from "abacatepay-nodejs-sdk";
+import { NotFoundError, ValidationError } from "../../shared/errors/app-error";
+import type { OrdersRepository } from "../orders/orders.repository";
+import type { CouponsRepository } from "../coupons/coupons.repository";
+
+const TOKEN_EXPIRY_HOURS = 48;
+const MAX_DOWNLOADS = 3;
+
+export class PaymentsService {
+  constructor(
+    private ordersRepository: OrdersRepository,
+    private couponsRepository: CouponsRepository,
+  ) {}
+
+  async createCheckout(orderId: number, userId: number) {
+    const order = await this.ordersRepository.findByIdForCheckout(orderId, userId);
+    if (!order) throw new NotFoundError("Order not found");
+    if (order.status !== "pending") throw new ValidationError("Order is not pending");
+
+    const abacate = AbacatePay(process.env.ABACATEPAY_API_KEY!);
+
+    const billing = await abacate.billing.create({
+      frequency: "ONE_TIME",
+      methods: ["PIX", "CARD"],
+      products: order.items.map((item: any) => ({
+        externalId: `product-${item.product_id}`,
+        name: item.product_name,
+        quantity: 1,
+        price: item.price,
+      })),
+      returnUrl: `${process.env.FRONTEND_URL}/orders/${order.id}`,
+      completionUrl: `${process.env.FRONTEND_URL}/orders/${order.id}/success`,
+      customer: {
+        name: `${order.user.name} ${order.user.last_name}`,
+        email: order.user.email,
+        ...(order.user.phone ? { cellphone: order.user.phone } : {}),
+      },
+    });
+
+    const billingResult = billing as any;
+    if (billingResult.error) throw new ValidationError(`Payment gateway error: ${billingResult.error}`);
+
+    await this.ordersRepository.setPaymentId(orderId, billingResult.data.id);
+
+    return { checkout_url: billingResult.data.url };
+  }
+
+  async handleWebhook(rawBody: Buffer, signature: string, querySecret: string) {
+    if (querySecret !== process.env.ABACATEPAY_WEBHOOK_SECRET) {
+      throw new ValidationError("Invalid webhook secret");
+    }
+
+    if (signature) {
+      const expected = crypto
+        .createHmac("sha256", process.env.ABACATEPAY_WEBHOOK_SECRET!)
+        .update(rawBody)
+        .digest("base64");
+
+      const valid =
+        Buffer.byteLength(expected) === Buffer.byteLength(signature) &&
+        crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+
+      if (!valid) throw new ValidationError("Invalid webhook signature");
+    }
+
+    const payload = JSON.parse(rawBody.toString("utf8"));
+    if (payload.event !== "checkout.completed") return;
+
+    const billingId: string = payload.data?.id;
+    if (!billingId) return;
+
+    await this.processPayment(billingId);
+  }
+
+  private async processPayment(billingId: string) {
+    const order = await this.ordersRepository.findByPaymentId(billingId);
+    if (!order || order.status === "paid") return;
+
+    await this.ordersRepository.markAsPaid(order.id);
+
+    const items = await this.ordersRepository.findItemsById(order.id);
+    const expiresAt = new Date(Date.now() + TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
+
+    for (const item of items) {
+      const token = crypto.randomUUID();
+      await this.ordersRepository.updateItemToken(item.id, token, expiresAt, MAX_DOWNLOADS);
+    }
+
+    if (order.coupon_id) {
+      await this.couponsRepository.incrementUsage(order.coupon_id);
+    }
+  }
+}

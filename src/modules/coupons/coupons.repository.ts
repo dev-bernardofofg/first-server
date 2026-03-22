@@ -72,6 +72,13 @@ export class CouponsRepository {
     return coupon ?? null;
   }
 
+  async incrementUsage(id: number) {
+    await this.db.query(
+      "UPDATE coupons SET current_usage = current_usage + 1 WHERE id = $1",
+      [id],
+    );
+  }
+
   async deactivate(id: number) {
     const {
       rows: [coupon],

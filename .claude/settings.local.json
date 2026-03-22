@@ -8,7 +8,13 @@
       "Bash(npm test:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(node -e \":*)"
+      "Bash(node -e \":*)",
+      "WebSearch",
+      "WebFetch(domain:docs.abacatepay.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.abacatepay.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(npm show:*)"
     ]
   }
 }
