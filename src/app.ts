@@ -1,8 +1,10 @@
 import "dotenv/config";
 import express from "express";
+import cors from "cors";
 import db from "./database";
 import errorHandler from "./shared/middlewares/error";
 import authenticate from "./shared/middlewares/auth";
+import requestLogger from "./shared/middlewares/request-logger";
 
 // Repositories
 import { UsersRepository } from "./shared/repositories/users.repository";
@@ -11,6 +13,10 @@ import { CouponsRepository } from "./modules/coupons/coupons.repository";
 import { OrdersRepository } from "./modules/orders/orders.repository";
 import { ReviewsRepository } from "./modules/reviews/reviews.repository";
 import { DownloadsRepository } from "./modules/downloads/downloads.repository";
+
+// Shared Services
+import { EmailService } from "./shared/services/email.service";
+import { StorageService } from "./shared/services/storage.service";
 
 // Services
 import { AuthService } from "./modules/auth/auth.service";
@@ -54,11 +60,14 @@ const ordersRepository = new OrdersRepository(db);
 const reviewsRepository = new ReviewsRepository(db);
 const downloadsRepository = new DownloadsRepository(db);
 
-const authService = new AuthService(usersRepository);
+const emailService = new EmailService();
+const storageService = new StorageService();
+
+const authService = new AuthService(usersRepository, emailService);
 const productsService = new ProductsService(productsRepository);
 const couponsService = new CouponsService(couponsRepository);
 const ordersService = new OrdersService(ordersRepository, productsRepository, couponsRepository);
-const adminService = new AdminService(ordersRepository, usersRepository, productsRepository);
+const adminService = new AdminService(ordersRepository, usersRepository, productsRepository, storageService);
 const reviewsService = new ReviewsService(reviewsRepository);
 const paymentsService = new PaymentsService(ordersRepository, couponsRepository);
 const downloadsService = new DownloadsService(downloadsRepository);
@@ -75,6 +84,13 @@ const downloadsController = new DownloadsController(downloadsService);
 // --- App ---
 
 const app = express();
+app.use(cors({
+  origin: process.env.FRONTEND_URL,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
+app.use(requestLogger);
 app.use(express.json({
   verify: (req: any, _res, buf) => {
     req.rawBody = buf;
