@@ -1,6 +1,8 @@
+import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { ConflictError, UnauthorizedError } from "../../shared/errors/app-error";
+import { ConflictError, NotFoundError, UnauthorizedError } from "../../shared/errors/app-error";
+import type { EmailService } from "../../shared/services/email.service";
 import type { UsersRepository } from "../../shared/repositories/users.repository";
 
 interface RegisterData {
@@ -18,13 +20,18 @@ interface RegisterData {
 }
 
 export class AuthService {
-  constructor(private usersRepository: UsersRepository) {}
+  constructor(
+    private usersRepository: UsersRepository,
+    private emailService: EmailService,
+  ) {}
 
   async register(data: RegisterData) {
     const existing = await this.usersRepository.findByEmail(data.email);
     if (existing) throw new ConflictError("Email already registered");
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
+    const verificationToken = crypto.randomUUID();
+
     const user = await this.usersRepository.create({
       email: data.email,
       hashedPassword,
@@ -37,7 +44,12 @@ export class AuthService {
       state: data.state ?? null,
       country: data.country ?? null,
       zipCode: data.zip_code ?? null,
+      verificationToken,
     });
+
+    if (process.env.NODE_ENV !== "test") {
+      await this.emailService.sendVerificationEmail(data.email, verificationToken);
+    }
 
     return {
       id: user.id,
@@ -54,6 +66,10 @@ export class AuthService {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw new UnauthorizedError("Invalid email or password");
 
+    if (process.env.NODE_ENV !== "test" && !user.email_verified) {
+      throw new UnauthorizedError("Please verify your email before logging in");
+    }
+
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET!,
@@ -64,5 +80,21 @@ export class AuthService {
       token,
       user: { id: user.id, email: user.email, name: user.name, role: user.role },
     };
+  }
+
+  async sendVerificationEmail(email: string) {
+    const user = await this.usersRepository.findByEmail(email);
+    if (!user) throw new NotFoundError("User not found");
+    if (user.email_verified) throw new ConflictError("Email is already verified");
+
+    const token = crypto.randomUUID();
+    await this.usersRepository.setVerificationToken(user.id, token);
+    await this.emailService.sendVerificationEmail(email, token);
+  }
+
+  async verifyEmail(token: string) {
+    const user = await this.usersRepository.findByVerificationToken(token);
+    if (!user) throw new NotFoundError("Invalid or expired verification token");
+    await this.usersRepository.setVerified(user.id);
   }
 }

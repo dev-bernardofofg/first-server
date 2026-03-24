@@ -41,4 +41,15 @@ export class AuthController {
     const result = await this.authService.login(email, password);
     res.json({ data: result });
   };
+
+  sendVerificationEmail = async (req: Request, res: Response) => {
+    const { email } = z.object({ email: z.string().email() }).parse(req.body);
+    await this.authService.sendVerificationEmail(email);
+    res.json({ data: { message: "Verification email sent" } });
+  };
+
+  verifyEmail = async (req: Request, res: Response) => {
+    await this.authService.verifyEmail(String(req.params.token));
+    res.json({ data: { message: "Email verified successfully" } });
+  };
 }

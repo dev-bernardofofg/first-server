@@ -6,6 +6,8 @@ export function createAuthRoutes(controller: AuthController) {
 
   router.post("/register", controller.register);
   router.post("/login", controller.login);
+  router.post("/verify-email", controller.sendVerificationEmail);
+  router.get("/verify-email/:token", controller.verifyEmail);
 
   return router;
 }

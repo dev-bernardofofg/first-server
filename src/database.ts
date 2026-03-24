@@ -1,5 +1,6 @@
 import "dotenv/config";
 import pg from "pg";
+import logger from "./shared/logger";
 
 const db = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
@@ -108,9 +109,11 @@ async function runMigrations(): Promise<void> {
       END IF;
     END $$
   `);
+  await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE`);
+  await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token TEXT`);
 }
 
-initializeDatabase().catch(console.error);
-runMigrations().catch(console.error);
+initializeDatabase().catch((err) => logger.error({ err }, "Database initialization failed"));
+runMigrations().catch((err) => logger.error({ err }, "Migration failed"));
 
 export default db;

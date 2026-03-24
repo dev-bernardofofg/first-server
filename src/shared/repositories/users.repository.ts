@@ -12,6 +12,7 @@ interface CreateUserData {
   state: string | null;
   country: string | null;
   zipCode: string | null;
+  verificationToken: string;
 }
 
 export class UsersRepository {
@@ -39,11 +40,12 @@ export class UsersRepository {
   }
 
   async create(data: CreateUserData) {
+    const emailVerified = process.env.NODE_ENV === "test";
     const {
       rows: [user],
     } = await this.db.query(
-      `INSERT INTO users (email, password, name, last_name, phone, tax_id, address, city, state, country, zip_code)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      `INSERT INTO users (email, password, name, last_name, phone, tax_id, address, city, state, country, zip_code, verification_token, email_verified)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
        RETURNING id, email, name, last_name, role`,
       [
         data.email,
@@ -57,8 +59,34 @@ export class UsersRepository {
         data.state,
         data.country,
         data.zipCode,
+        data.verificationToken,
+        emailVerified,
       ],
     );
     return user;
+  }
+
+  async findByVerificationToken(token: string) {
+    const {
+      rows: [user],
+    } = await this.db.query(
+      "SELECT * FROM users WHERE verification_token = $1",
+      [token],
+    );
+    return user ?? null;
+  }
+
+  async setVerified(id: number) {
+    await this.db.query(
+      "UPDATE users SET email_verified = TRUE, verification_token = NULL WHERE id = $1",
+      [id],
+    );
+  }
+
+  async setVerificationToken(id: number, token: string) {
+    await this.db.query(
+      "UPDATE users SET verification_token = $1 WHERE id = $2",
+      [token, id],
+    );
   }
 }
