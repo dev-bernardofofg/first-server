@@ -14,6 +14,23 @@ export class EmailService {
     return new Resend(process.env.RESEND_API_KEY);
   }
 
+  async sendPasswordResetEmail(to: string, token: string): Promise<void> {
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+
+    await this.getClient().emails.send({
+      from: this.from,
+      to,
+      subject: "Reset your password",
+      html: `
+        <h2>Password Reset</h2>
+        <p>You requested a password reset. Click the link below to set a new password:</p>
+        <a href="${resetUrl}">Reset Password</a>
+        <p>This link expires in 1 hour.</p>
+        <p>If you didn't request this, you can ignore this email.</p>
+      `,
+    });
+  }
+
   async sendVerificationEmail(to: string, token: string): Promise<void> {
     const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
 

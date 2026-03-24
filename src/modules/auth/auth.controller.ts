@@ -52,4 +52,18 @@ export class AuthController {
     await this.authService.verifyEmail(String(req.params.token));
     res.json({ data: { message: "Email verified successfully" } });
   };
+
+  forgotPassword = async (req: Request, res: Response) => {
+    const { email } = z.object({ email: z.string().email() }).parse(req.body);
+    await this.authService.forgotPassword(email);
+    res.json({ data: { message: "If that email exists, a reset link has been sent" } });
+  };
+
+  resetPassword = async (req: Request, res: Response) => {
+    const { password } = z.object({
+      password: z.string().min(6, "Password must be at least 6 characters"),
+    }).parse(req.body);
+    await this.authService.resetPassword(String(req.params.token), password);
+    res.json({ data: { message: "Password updated successfully" } });
+  };
 }

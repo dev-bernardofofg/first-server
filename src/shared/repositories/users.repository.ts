@@ -89,4 +89,28 @@ export class UsersRepository {
       [token, id],
     );
   }
+
+  async findByPasswordResetToken(token: string) {
+    const {
+      rows: [user],
+    } = await this.db.query(
+      "SELECT * FROM users WHERE password_reset_token = $1 AND password_reset_expires_at > NOW()",
+      [token],
+    );
+    return user ?? null;
+  }
+
+  async setPasswordResetToken(id: number, token: string, expiresAt: Date) {
+    await this.db.query(
+      "UPDATE users SET password_reset_token = $1, password_reset_expires_at = $2 WHERE id = $3",
+      [token, expiresAt, id],
+    );
+  }
+
+  async updatePassword(id: number, hashedPassword: string) {
+    await this.db.query(
+      "UPDATE users SET password = $1, password_reset_token = NULL, password_reset_expires_at = NULL WHERE id = $2",
+      [hashedPassword, id],
+    );
+  }
 }

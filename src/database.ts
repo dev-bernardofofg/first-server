@@ -111,6 +111,8 @@ async function runMigrations(): Promise<void> {
   `);
   await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE`);
   await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token TEXT`);
+  await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_token TEXT`);
+  await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_expires_at TIMESTAMP`);
 }
 
 initializeDatabase().catch((err) => logger.error({ err }, "Database initialization failed"));

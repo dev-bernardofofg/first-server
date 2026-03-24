@@ -97,4 +97,26 @@ export class AuthService {
     if (!user) throw new NotFoundError("Invalid or expired verification token");
     await this.usersRepository.setVerified(user.id);
   }
+
+  async forgotPassword(email: string) {
+    const user = await this.usersRepository.findByEmail(email);
+    // Não revelamos se o e-mail existe ou não
+    if (!user) return;
+
+    const token = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+    await this.usersRepository.setPasswordResetToken(user.id, token, expiresAt);
+
+    if (process.env.NODE_ENV !== "test") {
+      await this.emailService.sendPasswordResetEmail(email, token);
+    }
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const user = await this.usersRepository.findByPasswordResetToken(token);
+    if (!user) throw new NotFoundError("Invalid or expired reset token");
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.usersRepository.updatePassword(user.id, hashedPassword);
+  }
 }
