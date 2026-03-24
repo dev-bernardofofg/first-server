@@ -60,10 +60,11 @@ export class AuthController {
   };
 
   resetPassword = async (req: Request, res: Response) => {
-    const { password } = z.object({
+    const { token, password } = z.object({
+      token: z.string(),
       password: z.string().min(6, "Password must be at least 6 characters"),
     }).parse(req.body);
-    await this.authService.resetPassword(String(req.params.token), password);
+    await this.authService.resetPassword(token, password);
     res.json({ data: { message: "Password updated successfully" } });
   };
 }

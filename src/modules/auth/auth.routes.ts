@@ -9,7 +9,7 @@ export function createAuthRoutes(controller: AuthController) {
   router.post("/verify-email", controller.sendVerificationEmail);
   router.get("/verify-email/:token", controller.verifyEmail);
   router.post("/forgot-password", controller.forgotPassword);
-  router.post("/reset-password/:token", controller.resetPassword);
+  router.post("/reset-password", controller.resetPassword);
 
   return router;
 }
