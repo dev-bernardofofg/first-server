@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { NotFoundError, ValidationError } from "../../shared/errors/app-error";
+import logger from "../../shared/logger";
 import type { CouponsRepository } from "../coupons/coupons.repository";
 import type { OrdersRepository } from "../orders/orders.repository";
 
@@ -85,6 +86,7 @@ export class PaymentsService {
     const billingId: string = payload.data?.checkout?.id;
     if (!billingId) return;
 
+    logger.info({ event: payload.event, billingId }, "Payment webhook received");
     await this.processPayment(billingId);
   }
 
@@ -93,6 +95,7 @@ export class PaymentsService {
     if (!order || order.status === "paid") return;
 
     await this.ordersRepository.markAsPaid(order.id);
+    logger.info({ orderId: order.id, billingId }, "Payment processed successfully");
 
     const items = await this.ordersRepository.findItemsById(order.id);
     const expiresAt = new Date(Date.now() + TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
