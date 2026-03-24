@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
+import { ValidationError } from "../../shared/errors/app-error";
 import type { AdminService } from "./admin.service";
 
 const idSchema = z.coerce.number().int().positive();
@@ -33,5 +34,11 @@ export class AdminController {
   getAllProducts = async (req: Request, res: Response) => {
     const products = await this.adminService.getAllProducts();
     res.json({ data: products });
+  };
+
+  uploadImage = async (req: Request, res: Response) => {
+    if (!req.file) throw new ValidationError("No file provided");
+    const result = await this.adminService.uploadProductImage(req.file);
+    res.status(201).json({ data: result });
   };
 }

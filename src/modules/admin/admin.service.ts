@@ -1,4 +1,6 @@
+import type { Express } from "express";
 import { NotFoundError, ValidationError } from "../../shared/errors/app-error";
+import type { StorageService } from "../../shared/services/storage.service";
 import type { OrdersRepository } from "../orders/orders.repository";
 import type { UsersRepository } from "../../shared/repositories/users.repository";
 import type { ProductsRepository } from "../products/products.repository";
@@ -11,6 +13,7 @@ export class AdminService {
     private ordersRepository: OrdersRepository,
     private usersRepository: UsersRepository,
     private productsRepository: ProductsRepository,
+    private storageService: StorageService,
   ) {}
 
   async getAllOrders() {
@@ -29,5 +32,10 @@ export class AdminService {
 
   async getAllProducts() {
     return this.productsRepository.findAll();
+  }
+
+  async uploadProductImage(file: Express.Multer.File) {
+    const url = await this.storageService.uploadImage(file);
+    return { url };
   }
 }
