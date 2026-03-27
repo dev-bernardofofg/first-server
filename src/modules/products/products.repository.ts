@@ -7,11 +7,11 @@ interface ProductData {
   category: string | null;
   image_url: string | null;
   slug: string | null;
-  file_url: string;
+  file_url: string | null;
 }
 
 export class ProductsRepository {
-  constructor(private db: pg.Pool) {}
+  constructor(private db: pg.Pool) { }
 
   async findAll() {
     const { rows } = await this.db.query(

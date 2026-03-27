@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
-import type { ProductsService } from "./products.service";
 import type { StorageService } from "../../shared/services/storage.service";
+import type { ProductsService } from "./products.service";
 
 const idSchema = z.coerce.number().int().positive();
 
@@ -22,7 +22,7 @@ export class ProductsController {
   constructor(
     private productsService: ProductsService,
     private storageService: StorageService,
-  ) {}
+  ) { }
 
   getAll = async (req: Request, res: Response) => {
     const products = await this.productsService.getAll();

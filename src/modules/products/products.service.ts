@@ -12,7 +12,7 @@ interface ProductInput {
 }
 
 export class ProductsService {
-  constructor(private productsRepository: ProductsRepository) {}
+  constructor(private productsRepository: ProductsRepository) { }
 
   async getAll() {
     return this.productsRepository.findAllActive();
