@@ -115,7 +115,12 @@ async function runMigrations(): Promise<void> {
   await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_expires_at TIMESTAMP`);
 }
 
-initializeDatabase().catch((err) => logger.error({ err }, "Database initialization failed"));
-runMigrations().catch((err) => logger.error({ err }, "Migration failed"));
+/** Executa DDL e migrações em sequência para evitar corrida no pool (desync de protocolo / emptyQuery). */
+async function setupDatabase(): Promise<void> {
+  await initializeDatabase();
+  await runMigrations();
+}
+
+setupDatabase().catch((err) => logger.error({ err }, "Database setup failed"));
 
 export default db;
