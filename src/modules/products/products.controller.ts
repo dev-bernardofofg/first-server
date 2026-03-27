@@ -12,9 +12,9 @@ const productSchema = z.object({
     .int("Price must be an integer in cents")
     .positive("Price must be greater than zero"),
   category: z.string().optional(),
-  image_url: z.string().url("Invalid image URL").optional(),
-  slug: z.string().min(1).optional(),
-  file_url: z.string().min(1).optional(),
+  image_url: z.preprocess(v => v === "" ? undefined : v, z.string().url("Invalid image URL").optional()),
+  slug: z.preprocess(v => v === "" ? undefined : v, z.string().min(1).optional()),
+  file_url: z.preprocess(v => v === "" ? undefined : v, z.string().min(1).optional()),
 });
 
 export class ProductsController {

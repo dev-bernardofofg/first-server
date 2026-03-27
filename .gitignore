@@ -1,4 +1,29 @@
-.env
+# Dependencies
 node_modules/
-/dist
-.claude
+
+# Build
+dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Generated
+generated/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Claude
+.claude/
