@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
 import type { ProductsService } from "./products.service";
+import type { StorageService } from "../../shared/services/storage.service";
 
 const idSchema = z.coerce.number().int().positive();
 
@@ -14,13 +15,14 @@ const productSchema = z.object({
   category: z.string().optional(),
   image_url: z.string().url("Invalid image URL").optional(),
   slug: z.string().min(1).optional(),
-  file_url: z
-    .string({ error: "File URL is required" })
-    .min(1, "File URL is required"),
+  file_url: z.string().min(1).optional(),
 });
 
 export class ProductsController {
-  constructor(private productsService: ProductsService) {}
+  constructor(
+    private productsService: ProductsService,
+    private storageService: StorageService,
+  ) {}
 
   getAll = async (req: Request, res: Response) => {
     const products = await this.productsService.getAll();
@@ -34,12 +36,18 @@ export class ProductsController {
 
   create = async (req: Request, res: Response) => {
     const data = productSchema.parse(req.body);
+    if (req.file) {
+      data.image_url = await this.storageService.uploadImage(req.file);
+    }
     const product = await this.productsService.create(data);
     res.status(201).json({ data: product });
   };
 
   update = async (req: Request, res: Response) => {
     const data = productSchema.parse(req.body);
+    if (req.file) {
+      data.image_url = await this.storageService.uploadImage(req.file);
+    }
     const product = await this.productsService.update(idSchema.parse(req.params.id), data);
     res.json({ data: product });
   };

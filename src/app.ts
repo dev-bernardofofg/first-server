@@ -73,7 +73,7 @@ const paymentsService = new PaymentsService(ordersRepository, couponsRepository)
 const downloadsService = new DownloadsService(downloadsRepository);
 
 const authController = new AuthController(authService);
-const productsController = new ProductsController(productsService);
+const productsController = new ProductsController(productsService, storageService);
 const couponsController = new CouponsController(couponsService);
 const ordersController = new OrdersController(ordersService);
 const adminController = new AdminController(adminService);

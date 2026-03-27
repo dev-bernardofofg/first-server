@@ -8,7 +8,7 @@ interface ProductInput {
   category?: string;
   image_url?: string;
   slug?: string;
-  file_url: string;
+  file_url?: string;
 }
 
 export class ProductsService {
@@ -32,7 +32,7 @@ export class ProductsService {
       category: data.category ?? null,
       image_url: data.image_url ?? null,
       slug: data.slug ?? null,
-      file_url: data.file_url,
+      file_url: data.file_url ?? null,
     });
   }
 
@@ -44,7 +44,7 @@ export class ProductsService {
       category: data.category ?? null,
       image_url: data.image_url ?? null,
       slug: data.slug ?? null,
-      file_url: data.file_url,
+      file_url: data.file_url ?? null,
     });
     if (!product) throw new NotFoundError("Product not found");
     return product;

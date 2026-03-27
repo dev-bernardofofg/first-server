@@ -113,6 +113,7 @@ async function runMigrations(): Promise<void> {
   await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token TEXT`);
   await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_token TEXT`);
   await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_expires_at TIMESTAMP`);
+  await db.query(`ALTER TABLE products ALTER COLUMN file_url DROP NOT NULL`);
 }
 
 /** Executa DDL e migrações em sequência para evitar corrida no pool (desync de protocolo / emptyQuery). */

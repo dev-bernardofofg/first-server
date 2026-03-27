@@ -39,7 +39,7 @@ const userSchema = {
 
 const productSchema = {
   type: "object",
-  required: ["id", "name", "price", "file_url", "active"],
+  required: ["id", "name", "price", "active"],
   properties: {
     id: { type: "integer" },
     name: { type: "string" },
@@ -48,7 +48,7 @@ const productSchema = {
     category: { type: "string", nullable: true },
     image_url: { type: "string", nullable: true },
     slug: { type: "string", nullable: true },
-    file_url: { type: "string" },
+    file_url: { type: "string", nullable: true },
     active: { type: "boolean" },
     created_at: { type: "string", format: "date-time" },
     updated_at: { type: "string", format: "date-time" },
@@ -223,6 +223,98 @@ export const openApiSpec = {
       },
     },
 
+    "/auth/verify-email": {
+      post: {
+        tags: ["Auth"],
+        operationId: "sendVerificationEmail",
+        summary: "Send a verification email",
+        requestBody: {
+          required: true,
+          ...jsonContent({
+            type: "object",
+            required: ["email"],
+            properties: {
+              email: { type: "string", format: "email" },
+            },
+          }),
+        },
+        responses: {
+          200: {
+            description: "Verification email sent",
+            ...jsonContent(dataResponse({ type: "object", properties: { message: { type: "string" } } })),
+          },
+          ...errorResponses(400),
+        },
+      },
+    },
+
+    "/auth/verify-email/{token}": {
+      get: {
+        tags: ["Auth"],
+        operationId: "verifyEmail",
+        summary: "Verify email using token",
+        parameters: [{ name: "token", in: "path", required: true, schema: { type: "string" } }],
+        responses: {
+          200: {
+            description: "Email verified successfully",
+            ...jsonContent(dataResponse({ type: "object", properties: { message: { type: "string" } } })),
+          },
+          ...errorResponses(400),
+        },
+      },
+    },
+
+    "/auth/forgot-password": {
+      post: {
+        tags: ["Auth"],
+        operationId: "forgotPassword",
+        summary: "Request a password reset link",
+        requestBody: {
+          required: true,
+          ...jsonContent({
+            type: "object",
+            required: ["email"],
+            properties: {
+              email: { type: "string", format: "email" },
+            },
+          }),
+        },
+        responses: {
+          200: {
+            description: "Reset link sent if email exists",
+            ...jsonContent(dataResponse({ type: "object", properties: { message: { type: "string" } } })),
+          },
+          ...errorResponses(400),
+        },
+      },
+    },
+
+    "/auth/reset-password": {
+      post: {
+        tags: ["Auth"],
+        operationId: "resetPassword",
+        summary: "Reset password using token",
+        requestBody: {
+          required: true,
+          ...jsonContent({
+            type: "object",
+            required: ["token", "password"],
+            properties: {
+              token: { type: "string" },
+              password: { type: "string", minLength: 6 },
+            },
+          }),
+        },
+        responses: {
+          200: {
+            description: "Password updated successfully",
+            ...jsonContent(dataResponse({ type: "object", properties: { message: { type: "string" } } })),
+          },
+          ...errorResponses(400),
+        },
+      },
+    },
+
     "/products": {
       get: {
         tags: ["Products"],
@@ -242,19 +334,23 @@ export const openApiSpec = {
         security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
-          ...jsonContent({
-            type: "object",
-            required: ["name", "price", "file_url"],
-            properties: {
-              name: { type: "string" },
-              description: { type: "string" },
-              price: { type: "integer", description: "Price in cents" },
-              category: { type: "string" },
-              image_url: { type: "string", format: "uri" },
-              slug: { type: "string" },
-              file_url: { type: "string" },
+          content: {
+            "multipart/form-data": {
+              schema: {
+                type: "object",
+                required: ["name", "price"],
+                properties: {
+                  name: { type: "string" },
+                  description: { type: "string" },
+                  price: { type: "integer", description: "Price in cents" },
+                  category: { type: "string" },
+                  image: { type: "string", format: "binary" },
+                  slug: { type: "string" },
+                  file_url: { type: "string" },
+                },
+              },
             },
-          }),
+          },
         },
         responses: {
           201: { description: "Product created", ...jsonContent(dataResponse({ $ref: "#/components/schemas/Product" })) },
@@ -282,19 +378,23 @@ export const openApiSpec = {
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
         requestBody: {
           required: true,
-          ...jsonContent({
-            type: "object",
-            required: ["name", "price", "file_url"],
-            properties: {
-              name: { type: "string" },
-              description: { type: "string" },
-              price: { type: "integer" },
-              category: { type: "string" },
-              image_url: { type: "string", format: "uri" },
-              slug: { type: "string" },
-              file_url: { type: "string" },
+          content: {
+            "multipart/form-data": {
+              schema: {
+                type: "object",
+                required: ["name", "price"],
+                properties: {
+                  name: { type: "string" },
+                  description: { type: "string" },
+                  price: { type: "integer", description: "Price in cents" },
+                  category: { type: "string" },
+                  image: { type: "string", format: "binary" },
+                  slug: { type: "string" },
+                  file_url: { type: "string" },
+                },
+              },
             },
-          }),
+          },
         },
         responses: {
           200: { description: "Product updated", ...jsonContent(dataResponse({ $ref: "#/components/schemas/Product" })) },

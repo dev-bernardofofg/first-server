@@ -1,6 +1,7 @@
 import express from "express";
 import authenticate from "../../shared/middlewares/auth";
 import requireAdmin from "../../shared/middlewares/role";
+import upload from "../../shared/middlewares/upload";
 import type { ProductsController } from "./products.controller";
 
 export function createProductsRoutes(controller: ProductsController) {
@@ -11,8 +12,8 @@ export function createProductsRoutes(controller: ProductsController) {
   router.get("/:id", controller.getById);
 
   // Admin only
-  router.post("/", authenticate, requireAdmin, controller.create);
-  router.put("/:id", authenticate, requireAdmin, controller.update);
+  router.post("/", authenticate, requireAdmin, upload.single("image"), controller.create);
+  router.put("/:id", authenticate, requireAdmin, upload.single("image"), controller.update);
   router.delete("/:id", authenticate, requireAdmin, controller.delete);
 
   return router;
