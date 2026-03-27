@@ -1,6 +1,5 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
-import type { StorageService } from "../../shared/services/storage.service";
 import type { ProductsService } from "./products.service";
 
 const idSchema = z.coerce.number().int().positive();
@@ -19,10 +18,7 @@ const productSchema = z.object({
 });
 
 export class ProductsController {
-  constructor(
-    private productsService: ProductsService,
-    private storageService: StorageService,
-  ) { }
+  constructor(private productsService: ProductsService) { }
 
   getAll = async (req: Request, res: Response) => {
     const products = await this.productsService.getAll();
@@ -36,18 +32,12 @@ export class ProductsController {
 
   create = async (req: Request, res: Response) => {
     const data = productSchema.parse(req.body);
-    if (req.file) {
-      data.image_url = await this.storageService.uploadImage(req.file);
-    }
     const product = await this.productsService.create(data);
     res.status(201).json({ data: product });
   };
 
   update = async (req: Request, res: Response) => {
     const data = productSchema.parse(req.body);
-    if (req.file) {
-      data.image_url = await this.storageService.uploadImage(req.file);
-    }
     const product = await this.productsService.update(idSchema.parse(req.params.id), data);
     res.json({ data: product });
   };

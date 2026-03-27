@@ -334,23 +334,19 @@ export const openApiSpec = {
         security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
-          content: {
-            "multipart/form-data": {
-              schema: {
-                type: "object",
-                required: ["name", "price"],
-                properties: {
-                  name: { type: "string" },
-                  description: { type: "string" },
-                  price: { type: "integer", description: "Price in cents" },
-                  category: { type: "string" },
-                  image: { type: "string", format: "binary" },
-                  slug: { type: "string" },
-                  file_url: { type: "string" },
-                },
-              },
+          ...jsonContent({
+            type: "object",
+            required: ["name", "price"],
+            properties: {
+              name: { type: "string" },
+              description: { type: "string" },
+              price: { type: "integer", description: "Price in cents" },
+              category: { type: "string" },
+              image_url: { type: "string", format: "uri" },
+              slug: { type: "string" },
+              file_url: { type: "string" },
             },
-          },
+          }),
         },
         responses: {
           201: { description: "Product created", ...jsonContent(dataResponse({ $ref: "#/components/schemas/Product" })) },
@@ -378,23 +374,19 @@ export const openApiSpec = {
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
         requestBody: {
           required: true,
-          content: {
-            "multipart/form-data": {
-              schema: {
-                type: "object",
-                required: ["name", "price"],
-                properties: {
-                  name: { type: "string" },
-                  description: { type: "string" },
-                  price: { type: "integer", description: "Price in cents" },
-                  category: { type: "string" },
-                  image: { type: "string", format: "binary" },
-                  slug: { type: "string" },
-                  file_url: { type: "string" },
-                },
-              },
+          ...jsonContent({
+            type: "object",
+            required: ["name", "price"],
+            properties: {
+              name: { type: "string" },
+              description: { type: "string" },
+              price: { type: "integer", description: "Price in cents" },
+              category: { type: "string" },
+              image_url: { type: "string", format: "uri" },
+              slug: { type: "string" },
+              file_url: { type: "string" },
             },
-          },
+          }),
         },
         responses: {
           200: { description: "Product updated", ...jsonContent(dataResponse({ $ref: "#/components/schemas/Product" })) },
